@@ -8,6 +8,7 @@ import socket
 from subprocess import Popen, PIPE
 import sys
 import threading
+from typing import List
 
 
 class Connection:
@@ -56,26 +57,41 @@ class Connection:
 class WorkerThread(threading.Thread):
     """Service an incoming connection"""
 
-    def __init__(self, connections: list[Connection], index: int):
+    def __init__(self, connection: Connection, connections: List[Connection], connections_mutex):
         """Constructor"""
 
         super().__init__()
-        self.index = index
         self.connections = connections
-        self.snd_connection = connections[index]
+        self.connections_mutex = connections_mutex
+        self.snd_connection = connection
 
     @property
     def rcv_connection(self) -> Connection:
         # Set this as a property bcs connections list may not contain the receiver's
         # connection yet when the thread was spawned
-        return self.connections[(self.index + 1) % 2]
+        self.connections_mutex.acquire()
+        connection = [
+            connection for connection in self.connections if connection != self.snd_connection
+        ][0]
+        self.connections_mutex.release()
+        return connection
 
     def run(self):
         """Forward any incoming message from sender's connection to
         the receiver's connection"""
+        self.snd_connection.send_message("Welcome")
         while True:
             message = self.snd_connection.read_message()
-            self.rcv_connection.send_message(message)
+            print("Received message from {}: \n> {}\n".format(self.snd_connection.address, message))
+            if message == "FIN":
+                self.snd_connection.socket.close()
+                self.connections_mutex.acquire()
+                self.connections.remove(self.snd_connection)
+                self.connections_mutex.release()
+                print("Ended connection with {}\n".format(self.snd_connection.address))
+                break
+            if len(self.connections) > 1:
+                self.rcv_connection.send_message(message)
 
 
 class Server:
@@ -90,20 +106,26 @@ class Server:
         self.socket.bind(("", port))
         self.socket.listen(self.MAX_QUEUED_CONNECTIONS)
         # Track connections
+        self.connections_mutex = threading.Lock()
         self.connections = []
         self.threads = []
-        print("Socket created. Listening on port {}".format(port))
+        print("Socket created. Listening on port {}\n".format(port))
 
     def listen(self):
         while True:
             connection_socket, address = self.socket.accept()
-            print("Got connection from", address)
-            # Ignore connections not from alice or bob
+            print("Got connection from", address, "\n")
+            # Ignore connections after two parties have connected
             if len(self.connections) == 2:
+                connection_socket.send("FIN".encode())
+                connection_socket.close()
+                print("Ended connection with {}\n".format(address))
                 continue
             connection = Connection(connection_socket, address)
+            self.connections_mutex.acquire()
             self.connections.append(connection)
-            thread = WorkerThread(self.connections, len(self.connections) - 1)
+            self.connections_mutex.release()
+            thread = WorkerThread(connection, self.connections, self.connections_mutex)
             self.threads.append(thread)
             thread.start()
 
