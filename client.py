@@ -93,6 +93,8 @@ class Client:
         self.secure_send(str(soc_millionaire.g1_a2))
         print(G1_A2_SNT)
         soc_millionaire.g1_b2 = self.secure_receive()
+        if soc_millionaire.g1_b2 == 1:
+            raise Exception("ERROR: Received a poisoned message.")
         print(G1_B2_RCV)
         print(G2_COMPUTED)
         print(A3_COMPUTED)
