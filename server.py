@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 import mimetypes
+from nacl.encoding import HexEncoder
 import os
 from pathlib import Path
 import signal
@@ -8,7 +9,7 @@ import socket
 from subprocess import Popen, PIPE
 import sys
 import threading
-from typing import List
+from typing import Any, List, Union
 
 
 class Connection:
@@ -24,12 +25,14 @@ class Connection:
         self.socket = socket
         self.address = address
 
-    def read_message(self) -> str:
+    def read_message(self) -> Union[str, Any]:
         """Read a message from client (until a line break is found)"""
 
         message = self.socket.recv(self.BUFFER_SIZE)
-        message = message.decode()
-        message = message.strip()
+        try:
+            message = message.decode().strip()
+        except:
+            print("Failed to decode message.\n")
         return message
 
     def send_message(self, message):
