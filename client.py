@@ -21,20 +21,35 @@ from protocolutil import (
 class Client:
     def __init__(self, user: User, server_addr: str, server_port: int):
         self.user = user
+        self.second_last_sent_msg = ""
+        self.last_sent_msg = ""
+        self.last_received_msg = ""
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((server_addr, server_port))
 
     def secure_send(self, message: str) -> None:
         """Send messsage securely"""
-        packet = self.user.sign_message(message)
+        self.last_sent_msg = message
+        combined_message = message + self.last_received_msg
+        packet = self.user.sign_message(combined_message)
         self.socket.send(packet.encode())
 
     def secure_receive(self) -> int:
         """Receive message"""
         packet = self.socket.recv(4096).decode()
-        message = self.user.verify_packet(packet)
-        if not message:
-            raise Exception("ERROR: Received a forged packet.")
+        combined_message = self.user.verify_packet(packet)
+        if not combined_message:
+            raise Exception("ERROR: Received a forged packet (invalid signature).")
+        if not combined_message.endswith(self.second_last_sent_msg):
+            raise Exception("ERROR: Received a forged packet (invalid embedded message).")
+        message = (
+            combined_message
+            if self.second_last_sent_msg == ""
+            else combined_message[: len(self.second_last_sent_msg)]
+        )
+        self.last_received_msg = message
+        self.second_last_sent_msg = self.last_sent_msg
+        self.last_sent_msg = ""
         try:
             return int(message)
         except:
@@ -67,6 +82,8 @@ class Client:
         SND_FILE = "hash(alice file)" if self.user.name == "alice" else "hash(bob file)"
         RCV_FILE = "hash(bob file)" if self.user.name == "alice" else "hash(alice file)"
         # Log messages
+        CHALLENGE_SNT = "> Sent challenge message"
+        CHALLENGE_RECEIVED = "> Received challenge message"
         A2_COMPUTED = "> Computed random secret {}2\n".format(SND_SUBSCRIPT)
         G1_A2_SNT = "> Sent g1^{}2\n".format(SND_SUBSCRIPT)
         G1_B2_RCV = "> Received g1^{}2\n".format(RCV_SUBSCRIPT)
@@ -89,6 +106,10 @@ class Client:
         RAB_COMPUTED = "> Computed shared secret Rab = R{}^{}3\n".format(
             RCV_SUBSCRIPT, SND_SUBSCRIPT
         )
+        self.secure_send(str(secrets.randbits(2048)))
+        print(CHALLENGE_SNT)
+        self.secure_receive()
+        print(CHALLENGE_RECEIVED)
         print(A2_COMPUTED)
         self.secure_send(str(soc_millionaire.g1_a2))
         print(G1_A2_SNT)
