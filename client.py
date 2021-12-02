@@ -29,8 +29,8 @@ class Client:
 
     def secure_send(self, message: str) -> None:
         """Send messsage securely"""
-        self.second_last_sent_msg = self.last_sent_msg
-        self.last_sent_msg = message
+        self.second_last_sent_msg = self.last_sent_msg[:50]
+        self.last_sent_msg = message[:50]
         combined_message = message + self.last_received_msg
         packet = self.user.sign_message(combined_message)
         self.socket.send(packet.encode())
@@ -46,11 +46,9 @@ class Client:
         message = (
             combined_message
             if self.second_last_sent_msg == ""
-            else combined_message[: len(self.second_last_sent_msg)]
+            else combined_message[: -len(self.second_last_sent_msg)]
         )
-        self.last_received_msg = message
-        self.second_last_sent_msg = self.last_sent_msg
-        self.last_sent_msg = ""
+        self.last_received_msg = message[:50]
         try:
             return int(message)
         except:
