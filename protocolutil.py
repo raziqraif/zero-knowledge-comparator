@@ -19,8 +19,8 @@ def hash_as_int(text: str) -> int:
 
 class PublicKey:
     def __init__(self, p: int, g: int, g_x: int, verify_key: VerifyKey):
-        self.p = p  # prime
-        self.q = p - 1  # order of Z*p group
+        self.p = p  # prime in the form or 2q + 1 where q is a prime
+        self.q = (p - 1) // 2  # order of Z*p group
         self.g = g  # generator of Z*p group
         self.g_x = g_x  # generator raised to secret key
         self.verify_key = verify_key
@@ -41,8 +41,12 @@ class SocialistMillionaireTranscript:
         self.secret = secret
         self.is_first_sender = is_first_sender
         # Shared public key
+        # prime in the form or 2q + 1 where q is a prime
         self.p = 19812107358546665865075788571800041268057238148459671645996831818706737024464580364571694503227453750585850256208084681325431359008538342611831761022582814848454566938721086473007911929523126592783261609111253139428948923751359141590730735374846730803783623562595634073686456302324974542696120362114673769559011412761446436492231098362605461610508005277418373075904567346432319905964816216854326551316234274005831933317439924115438744603550708593834322402996007002747814988560315013640869662395106446441117427040111183588092052767805271264759157968801822492143875759327981555125258537922718698041636056674397410246383
-        self.g1 = 5  # Generator of Z*p group
+        self.q = (self.p - 1) // 2
+        self.g1 = 2  # Generator of of subgroup in Z*p with order q 
+        print('assertion test = ', pow(self.g1, self.q, self.p))
+        assert pow(self.g1, self.q, self.p) == 1
         # First transaction - secret
         self.a2 = self._get_secret()
         self.a3 = self._get_secret()

@@ -29,6 +29,7 @@ class Client:
 
     def secure_send(self, message: str) -> None:
         """Send messsage securely"""
+        self.second_last_sent_msg = self.last_sent_msg
         self.last_sent_msg = message
         combined_message = message + self.last_received_msg
         packet = self.user.sign_message(combined_message)
