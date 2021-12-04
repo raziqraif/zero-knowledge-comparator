@@ -16,4 +16,5 @@ or
 
 # Report
 
-The code spec and security analysis can be found in [report/report.pdf](https://github.com/raziqraif/zero-knowledge-comparator/blob/main/report/report.pdf)
+The code spec and security analysis can be found in
+[report/report.pdf](https://github.com/raziqraif/zero-knowledge-comparator/blob/draft/report/report.pdf)
