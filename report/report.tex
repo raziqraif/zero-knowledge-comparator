@@ -8,7 +8,7 @@
 
 \newtheorem{goal}{Goal}
 
-\title{File Comparator based on Zero-Knowledge Proof}
+\title{Secure Comparator based on Zero-Knowledge Proof}
 \author{Raziq Ramli}
 \date{November 2021}
 \author{Raziq R. Ramli\\ CS Department, Purdue University}
@@ -31,44 +31,23 @@ them to check that the files are identical without any
 of the parties revealing to the other party the contents 
 of his file.
 
-\section*{2. Code Spec}
+\section*{2. Approach}
 
-Language used: 
-\begin{itemize}
-  \item Python
-\end{itemize}
-
-Libraries used: 
-\begin{itemize}
-  \item socket - for client-server implementation
-  \item hashlib - for hashing messages
-  \item secrets - for generating large random keys securely
-  \item nacl - for signing/verifying messages
-\end{itemize}
-
-External tool used:
-\begin{itemize}
-  \item openssl dhparam - for generating large prime multiplicative groups 
-  and their generators
-\end{itemize}
-
-\section*{3. Approach}
-
-We reduced the problem to the Socialist Millionaire Problem, where
+I reduced the problem to the Socialist Millionaire Problem, where
 two millionaires want to check if they have equal wealth without having to disclose
 their amount of wealth. 
 
-Then, we incorporated an existing solution to the problem called Socialist Millionaire
-Protocol (SMP) as a routine in our protocol. The general outline for our protocol is as 
+Then, I incorporated an existing solution to the problem called Socialist Millionaire
+Protocol (SMP) as a routine in my protocol. The general outline for my protocol is as 
 follows.
 
 
 Initial Routine
 
 \begin{itemize}
-  \item Alice computes $m_a = $ SHA-3(Alice's file)
-  \item Bob computes $m_b = $ SHA-3(Bob's file)
-  \item Alice and Bob agrees on a cyclic group $G$ of prime order $q$ (2048-bit), 
+  \item Alice computes $m_a = $ SHA3-512(Alice's file)
+  \item Bob computes $m_b = $ SHA3-512(Bob's file)
+  \item Alice and Bob agrees on a cyclic group $G$ of prime order $q$ (2047-bit), 
     and a generator $g_1$
     (this information is public)
 \end{itemize}
@@ -119,47 +98,55 @@ $m_a = m_b$ implies SHA-3(Alice's file) = SHA-3(Bob's file).
 From the collision-resistance property of SHA-3, we can conclude with a high probability 
 that Alice and Bob share the same file.
 
-\section*{4. Security Goals}
+\section*{3. Security Goals}
 
-For simplicity, we will call our adversary Eve, and we may only refer to Alice
-when writing from the perspective of honest parties. However, no loss of generality 
-is implied.
+For simplicity, I will call our adversary Eve, and only refer to Alice
+when writing from the perspective of honest parties (without loss of generality).
 
 \begin{goal}
-Even if Alice knows the full content of Bob's file (say, from past protocol interactions),
-Alice will not be able to learn anything about the file that Bob sends over this protocol.
+Prevent Alice from learning the content of Bob's file over this protocol, even if 
+Alice possesses a full copy of Bob's file (say, from past successful comparisons).
 \end{goal}
 
-$Exception:$ 
+$Caveat:$ 
 
-Alice may learn about Bob's sent file if the protocol indicated that their files are equal.
+Alice may learn the content of Bob's file if the protocol indicated their files 
+are equal.
 
 $Approach:$ 
 
-Socialist Millionaire Protocol, as described in Section 3.
+Socialist Millionaire Protocol, as described in Section 2.
 
 $Proof:$
 
 If Bob's file is not equal to Alice's file, we will prove that Alice will not be able 
 to learn anything about the file that Bob has sent over this protocol.
 
-Bob has only sent his file $m_b$, to Alice in the form of $$Q_b = g_1^sg_2^{m_b}$$ \text{ and } 
+The protocol requires Bob to send his file $m_b$, to Alice in the form of 
+$$Q_b = g_1^sg_2^{m_b}$$ 
 $$R_{b} = g_1^{(r-s)b_3} \cdot g_2^{(m_a-m_b)b_3}$$ 
 
-From hardness of Discrete Log problem, these two message do not expose the content of 
+From the hardness of Discrete Logarithm problem, these two message do not expose the content of 
 $m_b$.
 
 However, suppose Alice knows the content of Bob's old file, $m_b'$, the hardness of 
-Discrete Log problem does not prevent Alice from trying 
+Discrete Logarithm problem does not prevent Alice from trying 
 to compute $$Q_b' = g_1^sg_2^{m_b'}$$
 $$R_{b}' = g_1^{(r-s)b_3} \cdot g_2^{(m_a-m_b')b_3}$$ 
 
 If the computed $Q_b' = Q_b$ or $R_b' = R_b'$, then Alice can be certain that $m_b = m_b'$.
 
 However, computing $Q_b'$ or $R_b'$ requires Alice to know Bob's secret key $s$, which is 
-not exposed anywhere throughout the protocol. Thus, $Q_b'$ and $R_b'$ are not 
+not exposed by the protocol. Thus, $Q_b'$ and $R_b'$ are not 
 computable by Alice, and Alice cannot learn about the file that Bob has sent over 
-this protocol, even if she has the full copy of Bob's file on her machine.
+this protocol is equal to her copy of Bob's password file.
+
+$Practical\ consequence:$
+
+Suppose Alice and Bob interacts using this protocol every quarter. The first quarter,
+they learn that their files are equal. The second quarter, Alice's file has changed while
+Bob's file remains the same. In this case, Alice technically has a full copy of Bob's file,
+but she will not be able to verify if Bob is still using this file over this protocol. 
 
 \begin{goal}
 Even if Eve has access to the messages previously sent by Alice, Eve should not
@@ -197,7 +184,7 @@ she should not be able to tell if Alice and Bob have the same files or not.
 
 $Approach:$ 
 
-Socialist Millionaire Protocol, as described in $Section\ 3$
+Socialist Millionaire Protocol, as described in $Section\ 2$
 
 $Proof:$
 
@@ -214,23 +201,38 @@ $Consequence:$
 Even if Alice's password file was somehow leaked to Eve, this protocol will not allow 
 Eve to test if she also knows the full content of Bob's password file.
 
+\section*{4. Code Spec}
+
+Language used: 
+\begin{itemize}
+  \item Python
+\end{itemize}
+
+Libraries used: 
+\begin{itemize}
+  \item socket - for client-server implementation
+  \item hashlib - for hashing messages
+  \item secrets - for generating large random keys securely
+  \item nacl - for signing/verifying messages
+\end{itemize}
+
 \section*{5. Assumptions}
 
 For the protocol implementation, is assumed that:
 
 \begin{itemize}
   \item Alice and Bob knows each others' public keys in advanced
-  \item Alice and Bob has fixed a public prime number $p$ and generator $g_1$ 
+  \item Alice and Bob fixes a cyclic group G of prime number $q$ and generator $g_1$ 
   for the Socialist Millionaire Protocol in advanced
   \item Alice and Bob may only perform passive attacks based on what is on their view
 \end{itemize}
 
-\section*{5.Note}
+\section*{6. Note}
 
 For simplicity, the implemented server only allows 2 connections at a time. 
 This may allow an adversary to monopolize the server connections and deny 
-services to Alice or Bob. However, 
-since this project is only concerned with data secrecy and 
-integrity, this type of attack is not covered in the implementation.
+services to Alice or Bob. However, since this project is only concerned with 
+data secrecy and integrity, this type of attack is not covered in the 
+implementation.
 
 \end{document}

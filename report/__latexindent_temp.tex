@@ -68,7 +68,7 @@ Initial Routine
 \begin{itemize}
   \item Alice computes $m_a = $ SHA-3(Alice's file)
   \item Bob computes $m_b = $ SHA-3(Bob's file)
-  \item Alice and Bob agrees on a cyclic group $G$ of prime order $q$ (2048-bit), 
+  \item Alice and Bob agrees on a cyclic group $G$ of prime order $q$ (2047-bit), 
     and a generator $g_1$
     (this information is public)
 \end{itemize}
@@ -220,16 +220,18 @@ For the protocol implementation, is assumed that:
 
 \begin{itemize}
   \item Alice and Bob knows each others' public keys in advanced
-  \item Alice and Bob has fixed a public prime number $p$ and generator $g_1$ 
+  \item Alice and Bob fixes a cyclic group G of prime number $q$ and generator $g_1$ 
   for the Socialist Millionaire Protocol in advanced
   \item Alice and Bob may only perform passive attacks based on what is on their view
 \end{itemize}
 
-\section*{5.NoteNotes}
+\section*{6. Note}
 
 For simplicity, the implemented server only allows 2 connections at a time. 
 This may allow an adversary to monopolize the server connections and deny 
-services to Alice or Bob. However, 
+services to Alice or Bob. 
+
+However, 
 since this project is only concerned with data secrecy and 
 integrity, this type of attack is not covered in the implementation.
 
