@@ -31,19 +31,20 @@ them to check that the files are identical without any
 of the parties revealing to the other party the contents 
 of his file.
 
-\section*{2. Solution}
+\section*{2. Main Idea}
 
 We can reduce the problem to the socialist millionaire problem, where
-two millionaires want to check if they have equal wealth without having to disclose
+two millionaires want to check if they have equal wealth without disclosing 
 their amount of wealth. 
 
-Given this, we can implement a protocol that uses the Socialist Millionaire
-Protocol (SMP) which is a solution to the socialist millionaire problem, to achieve
-this project's goal. 
-The general outline for the implemented protocol is as follows:
+Given this, we can implement a protocol that uses a solution for the 
+millionaire problem to achieve this project's goal. The protocol 
+implemented in this submission specifically utilizes a solution called 
+the Socialist Millionaire Protocol (SMP).
 
+The outline for the implemented protocol is as follows:
 
-Initial Routine
+1) Initial Routine:
 
 \begin{itemize}
   \item Alice computes $m_a = $ SHA3-512(Alice's file)
@@ -53,7 +54,7 @@ Initial Routine
     (this information is public)
 \end{itemize}
 
-SMP - Key Exchange 1
+2) SMP - Key Exchange 1:
 \begin{itemize}
   \item Alice generates random numbers $a_2$ and $a_3$ s.t. $q \nmid a_2, a_3$
   \item Bob generates random numbers $b_2$ and $b_3$ s.t. $q \nmid b_2, b_3$
@@ -62,7 +63,7 @@ SMP - Key Exchange 1
   \item Alice and Bob compute $g_2 = (g_1^{a_2})^{b_2}$ and $g_3 = (g_1^{a_3})^{b_3}$
 \end{itemize}
 
-SMP - Key Exchange 2
+3) SMP - Key Exchange 2:
 \begin{itemize}
   \item Alice generates a random number r
   \item Bob generates a random number s
@@ -70,14 +71,14 @@ SMP - Key Exchange 2
   \item Bob sends $P_b = g_3^s$ and $Q_b = g_1^sg_2^{m_b}$
 \end{itemize}
 
-SMP - Key Exchange 3
+4) SMP - Key Exchange 3
 \begin{itemize}
   \item Alice sends $R_a = (Q_a/Q_b)^{a_3} = g_1^{(r-s)a_3}\cdot g_2^{(m_a-m_b)a_3}$
   \item Bob sends $R_b = (Q_a/Q_b)^{b_3} = g_1^{(r-s)b_3}\cdot g_2^{(m_a-m_b)b_3}$
   \item Alice and Bob compute $R_{ab} = ((Q_a/Q_b)^{a_3})^{b_3} = 
   g_1^{(r-s)a_3b_3} \cdot g_2^{(m_a-m_b)a_3b_3}$
 \end{itemize}
-SMP - Key Comparison
+5) SMP - Key Comparison:
 \begin{itemize}
   \item Alice's and Bob's files are equal if $R_{ab} == P_a / P_b$
 \end{itemize}
@@ -99,7 +100,7 @@ $m_a = m_b$ implies SHA3-512(Alice's file) = SHA3-512(Bob's file).
 From the collision-resistance property of SHA3, we can conclude that Alice and Bob 
 share the same file.
 
-\section*{3. Security Goals}
+\section*{3. Security Goals }
 
 Without loss of generality, this report will call the adversary Eve, and will only 
 refer to Alice when writing from the perspective of honest parties. 
@@ -110,7 +111,7 @@ perform passive attacks to each other.
 
 \begin{goal}
 The protocol should prevent Alice from learning the content of Bob's file, even if 
-Alice possesses a full copy of the file (e.g., from past successful comparisons). 
+Alice possesses a full copy of the file (e.g., from past equality results). 
 \footnote{Alice may learn the content of Bob's file if the protocol indicated
 their files are equal.}
 \end{goal}
@@ -119,7 +120,7 @@ $Approach:$
 
 Socialist Millionaire Protocol, as described in Section 2.
 
-$Proof:$
+$Proof\ of\ security:$
 
 The Socialist Millionaire Protocol requires Bob to send his hashed file, $m_b$, in the 
 form of 
@@ -129,8 +130,8 @@ $$R_{b} = g_1^{(r-s)b_3} \cdot g_2^{(m_a-m_b)b_3}$$
 From the hardness of the discrete logarithm problem, these two message do not expose 
 the value of $m_b$.
 
-However, suppose Alice knows the content of Bob's past file, $m_b'$ (from past successful 
-comparison) the hardness of the discrete logarithm problem does not prevent Alice from 
+However, suppose Alice knows the content of Bob's past file, $m_b'$ (from past equality 
+results) the hardness of the discrete logarithm problem does not prevent Alice from 
 trying to compute $$Q_b' = g_1^sg_2^{m_b'}$$
 $$R_{b}' = g_1^{(r-s)b_3} \cdot g_2^{(m_a-m_b')b_3}$$ 
 
@@ -165,7 +166,7 @@ receives from Alice is appended with his recently sent message.
 
 If any of the verfication fails, then Bob will abort the protocol.
 
-$Proof:$
+$Proof\ of\ security:$
 
 From the security of Ed25519 signature system, it is infeasible for Eve to 
 forge a valid $(message, signature)$ pair from Alice.
@@ -184,7 +185,7 @@ $Approach:$
 
 Socialist Millionaire Protocol, as described in $Section\ 2$
 
-$Proof:$
+$Proof\ of\ security:$
 
 The Socialist Millionaire Protocol allows any party to learn the equality of 
 Alice's and Bob's files if they can compute both
@@ -198,7 +199,7 @@ by Eve.
 Thus, it is not possible for Eve to learn the equality of Alice's and Bob's files 
 through this protocol.
 
-\section*{4. Implementation}
+\section*{4. Protocol Implementation}
 
 \subsection*{4.1 Code Spec}
 
@@ -210,14 +211,14 @@ Language used:
 Libraries used: 
 \begin{itemize}
   \item socket - for client-server implementation
-  \item hashlib - for hashing messages
-  \item secrets - for generating large random keys securely
-  \item nacl - for signing/verifying messages
+  \item hashlib - for hashing messages with SHA3-512
+  \item secrets - for generating cryptographically secure random keys 
+  \item nacl - for signing/verifying messages with Ed25519
 \end{itemize}
 
 \subsection*{4.2. Assumptions}
 
-For the protocol implementation, is assumed that:
+For the implementation, is assumed that:
 
 \begin{itemize}
   \item Alice and Bob knows each others' public keys in advanced
@@ -225,7 +226,7 @@ For the protocol implementation, is assumed that:
   for the Socialist Millionaire Protocol in advanced
 \end{itemize}
 
-\subsection*{4.3. Note}
+\subsection*{4.3. Additional Note}
 
 For simplicity, the implemented server only allows 2 connections at a time. 
 This may allow an adversary to monopolize the server connections and deny 
