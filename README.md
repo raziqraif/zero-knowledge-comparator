@@ -1,5 +1,10 @@
 # Zero-Knowledge-Comparator
 
+# Report
+
+The code spec and security analysis can be found in
+[report/report.pdf](https://github.com/raziqraif/zero-knowledge-comparator/blob/draft/report/report.pdf)
+
 ## Sample Usage
 
 To start the server:
@@ -13,8 +18,3 @@ To start the client:
 or
 
 `python3 client.py bob localhost <port number>`
-
-# Report
-
-The code spec and security analysis can be found in
-[report/report.pdf](https://github.com/raziqraif/zero-knowledge-comparator/blob/draft/report/report.pdf)
